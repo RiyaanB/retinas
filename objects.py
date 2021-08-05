@@ -28,7 +28,7 @@ class Representation:
 
 class Body:
 
-    def __init__(self, labels, points, representation=None):
+    def __init__(self, labels, points, representation=None, rvec=None, tvec=None):
         assert __is_iterable__(labels)
         assert isinstance(points, np.matrix) or isinstance(points, np.ndarray)
         assert points.shape[0] == 3
@@ -41,6 +41,20 @@ class Body:
         self.labels = labels
         self.points = points
         self.representation = representation
+
+        if rvec is None:
+            self.rvec = [0, 0, 0]
+        if tvec is None:
+            self.tvec = [0, 0, 0]
+
+        assert len(rvec) == 3
+        for r in rvec:
+            assert float(r)
+        assert len(tvec) == 3
+        for t in tvec:
+            assert float(t)
+        self.rvec = rvec
+        self.tvec = tvec
 
 
 class Camera:
