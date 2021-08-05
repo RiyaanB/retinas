@@ -1,7 +1,6 @@
 import numpy as np
 import cv2
 
-def
 
 
 def get_camera_observation(i, C):

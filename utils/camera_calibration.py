@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import glob
 
-import camera_streamers as cs
+import camera_streamer as cs
 
 # Collect images
 
