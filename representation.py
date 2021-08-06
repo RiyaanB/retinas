@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from pose import *
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -42,7 +43,7 @@ class Representation:
         for point, details in representation.dots.items():
             self.lines[point] = details
 
-    def draw(self, frame, K, D, rvec, tvec):
+    def draw(self, frame, K, D, pose_rvec, tvec=None):
         object_points_list = list(self.points)
 
         object_points_map = {}
@@ -50,7 +51,10 @@ class Representation:
             object_points_map[object_points_list[i]] = i
 
         object_points = np.float32(object_points_list)
-        frame_points = cv2.projectPoints(object_points, rvec, tvec, K, D)
+
+        pose = Pose(pose_rvec, tvec)
+
+        frame_points = cv2.projectPoints(object_points, pose.rvec, pose.tvec, K, D)
 
         for line in self.lines:
             object_start = line[0], line[1], line[2]
