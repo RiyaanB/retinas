@@ -1,4 +1,6 @@
 import numpy as np
+from representation import *
+from pose import *
 
 MIN_POINTS = 4
 MIN_REPRESENTATION = 1
@@ -12,23 +14,9 @@ def __is_iterable__(x):
     return not (('__iter__' not in dir(x)) or (x.__iter__ is None))
 
 
-class Representation:
-
-    def __init__(self, segments, colors):
-        for segment in segments:
-            assert len(segment) == 2
-            assert len(segment[0]) == 3
-            assert len(segment[1]) == 3
-        for color in colors:
-            assert len(color) == 3
-
-        self.segments = segments
-        self.colors = colors
-
-
 class Body:
 
-    def __init__(self, labels, points, representation=None, rvec=None, tvec=None):
+    def __init__(self, labels, points, representation=None, pose=None):
         assert __is_iterable__(labels)
         assert isinstance(points, np.matrix) or isinstance(points, np.ndarray)
         assert points.shape[0] == 3
@@ -42,25 +30,17 @@ class Body:
         self.points = points
         self.representation = representation
 
-        if rvec is None:
-            self.rvec = [0, 0, 0]
-        if tvec is None:
-            self.tvec = [0, 0, 0]
-
-        assert len(rvec) == 3
-        for r in rvec:
-            assert float(r)
-        assert len(tvec) == 3
-        for t in tvec:
-            assert float(t)
-        self.rvec = rvec
-        self.tvec = tvec
+        if pose is None:
+            pose = Pose(0, 0, 0, 0, 0, 0)
+        self.pose = pose
 
 
 class Camera:
 
-    def __init__(self, streamer):
+    def __init__(self, streamer, representation=None, pose=None):
         self.streamer = streamer
+        self.representation = representation
+        self.pose = pose
 
     def get_view(self):
         pass
