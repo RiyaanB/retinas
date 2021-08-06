@@ -21,7 +21,10 @@ class Pose:
         return rvec, tvec
 
     def __init__(self, rvec, tvec=None, r2=None, t1=None, t2=None, t3=None):
-        if t3 is not None:
+
+        if isinstance(rvec, Pose):
+            self.__init__(rvec.rvec, rvec.tvec)
+        elif t3 is not None:
             self.__init__((rvec, tvec, r2), (t1, t2, t3))
         elif tvec is None:
             if isinstance(rvec, np.ndarray):
