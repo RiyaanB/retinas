@@ -43,6 +43,10 @@ class Representation:
         for point, details in representation.dots.items():
             self.lines[point] = details
 
+    def add_point_dict(self, points, color=RED, thickness=DEFAULT_THICKNESS):
+        for label, point in points.items():
+            self.add_dot(point, color, thickness)
+
     def draw(self, frame, K, D, pose_rvec, tvec=None):
         object_points_list = list(self.points)
 
@@ -77,7 +81,7 @@ class Representation:
 class AxisArrow(Representation):
 
     def __init__(self, name="Arrow", color=RED, thickness=DEFAULT_THICKNESS, axis=2, axis_start=-0.05, axis_end=0.05,
-                 size=0.2):
+                 size=0.03):
         super(AxisArrow, self).__init__(name)
         size = (axis_end - axis_start) * size  # size is percentage
         if axis == 0:
@@ -108,7 +112,7 @@ class Axes(Representation):
 class AxisRectangle(Representation):
 
     def __init__(self, name="Rectangle", color=RED, thickness=DEFAULT_THICKNESS, axis=2, top_left=(-0.1, 0.1, 0),
-                 height=0.05, width=0.02):
+                 width=0.05, height=0.02):
         super(AxisRectangle, self).__init__(name)
         assert axis in (0, 1, 2)
         if axis == 0:
@@ -138,3 +142,11 @@ class AxisSquare(AxisRectangle):
     def __init__(self, name="Square", color=RED, thickness=DEFAULT_THICKNESS, axis=2, top_left=(-0.1, 0.1, 0),
                  side=0.05):
         super(AxisSquare, self).__init__(name, color, thickness, axis, top_left, side, side)
+
+
+class AxisCamera(Representation):
+
+    def __init__(self, name="Camera", thickness=DEFAULT_THICKNESS, axis=2):
+        super(AxisCamera, self).__init__(name)
+        self.add_representation(AxisRectangle("Rectangle", (BLUE, RED, GREEN, RED), thickness, axis, (-0.05, 0.025, 0), 0.1, 0.05))
+        self.add_representation(AxisArrow("Arrow", WHITE, thickness, axis, -0.02, 0.05, 0.025))
