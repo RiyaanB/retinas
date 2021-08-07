@@ -53,6 +53,7 @@ class Pose:
 
 
 def get_cam_pose(position, target):
+    # returns cTb, i.e. not body/world pose
     position = np.array([position], dtype=float)
     target = np.array([target], dtype=float)
     # GRAM-SCHMIDT PROCESS

@@ -6,8 +6,8 @@ from objects import *
 import utils.camera_streamer as cs
 import threading
 
-DEFAULT_CAMERA_POSITION = (-1, -1, 1)
-DEFAULT_CAMERA_TARGET = (0., 0., 0.)
+DEFAULT_CAMERA_POSITION = (0, -2, 0.5)
+DEFAULT_CAMERA_TARGET = (0., 0., 0.2)
 DEFAULT_WORLD_CAM_POSE = get_cam_pose(DEFAULT_CAMERA_POSITION, DEFAULT_CAMERA_TARGET)
 DEFAULT_CAMERA_DIMS = (720, 1280, 3)
 DEFAULT_K = cs.mac_K
@@ -29,11 +29,11 @@ class World:
     def draw(self):
         frame = np.zeros(self.camera_dims)
         for body in self.bodies:
-            pose = Pose(0,0,0,0,0.2,1) # body.pose @ self.camera_pose.invert()
+            pose = body.pose @ self.camera_pose.invert()    # Pose(0,0,0,0,0.2,1)
             body.representation.draw(frame, self.K, self.D, pose)
 
         for camera in self.cameras:
-            pose = Pose(-0.4, 0.5, 0, -0.2, -0.2, 1) # camera.pose @ self.camera_pose.invert()
+            pose = camera.pose @ self.camera_pose.invert()  # Pose(-0.4, 0.5, 0, -0.2, -0.2, 1)
             camera.representation.draw(frame, self.K, self.D, pose)
         return frame
 
@@ -42,13 +42,13 @@ if __name__ == '__main__':
     bodies = []
     cameras = []
 
-    b0 = RetinaBody("World", {1: (-1, 1, 0), 2: (1, 1, 0), 3: (1, -1, 0), 4: (-1, -1, 0)}, ((0, 0, 0), (0, 0, 0)))
-    b1 = RetinaBody("Link", {1: (-0.1, 0.1, 0)}, ((0, 0, 0.), (0, 0, 0.2)), AxisArrow(axis=0))
+    b0 = RetinaBody("World", {1: (-0.5, 0.5, 0), 2: (0.5, 0.5, 0), 3: (0.5, -0.5, 0), 4: (-0.5, -0.5, 0)}, ((0, 0, 0), (0, 0, 0)))
+    b1 = RetinaBody("Link", {1: (-0.1, 0.1, 0)}, ((0, 0, 0.), (0, 0, 0.2)), Axes())
 
     bodies.append(b0)
     bodies.append(b1)
 
-    c0 = RetinaCamera(cs.WebcamStreamer(0, cs.mac_K, 0))
+    c0 = RetinaCamera(cs.WebcamStreamer(0, cs.mac_K, 0), None, get_cam_pose((0.01,-0.01,0.01), (0,0,0)))
 
     cameras.append(c0)
 

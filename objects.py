@@ -23,7 +23,8 @@ class RetinaBody:
             point_dict = {}
         self.point_dict = point_dict
         if representation is None:
-            self.representation = Representation(point_dict)
+            self.representation = Representation(name)
+            self.representation.add_point_dict(point_dict)
         else:
             self.representation = representation
 
