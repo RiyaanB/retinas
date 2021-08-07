@@ -32,7 +32,7 @@ elp_K = np.array([
 
 class RemoteStreamer(Thread):
 
-    def __init__(self, url, K, D=0):
+    def __init__(self, url, K, D=0, name="Camera"):
         super(RemoteStreamer, self).__init__()
         self.url = url
         self.img = None
@@ -40,6 +40,7 @@ class RemoteStreamer(Thread):
         self.is_running = True
         self.K = K
         self.D = D
+        self.name = name
         self.start()
 
     def run(self):
@@ -67,7 +68,7 @@ class RemoteStreamer(Thread):
 
 class WebcamStreamer(Thread):
 
-    def __init__(self, camera_number, K, D=0):
+    def __init__(self, camera_number, K, D=0, name="Camera"):
         super(WebcamStreamer, self).__init__()
         self.img = None
         self.ret = False
@@ -76,6 +77,7 @@ class WebcamStreamer(Thread):
         self.K = K
         self.D = D
         time.sleep(0)
+        self.name = name
         self.start()
 
     def run(self):
