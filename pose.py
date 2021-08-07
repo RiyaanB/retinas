@@ -51,3 +51,26 @@ class Pose:
     def __str__(self):
         return "({}, {}, {}), ({}, {}, {})".format(*self.rvec, *self.tvec)
 
+
+def get_cam_pose(position, target):
+    position = np.array(position, dtype=float)
+    target = np.array(target, dtype=float)
+    # GRAM-SCHMIDT PROCESS
+    direction_vector = target - position
+    unit_direction_vector = direction_vector / np.linalg.norm(direction_vector)
+    up_vector = np.array([[0,1,0]])
+    camera_right = np.cross(up_vector, unit_direction_vector)
+    camera_right /= np.linalg.norm(camera_right)
+    camera_up = np.cross(unit_direction_vector, camera_right)
+    cam_pose = np.zeros((4,4))
+    cam_pose[0, :3] = camera_right
+    cam_pose[1, :3] = camera_up
+    cam_pose[2, :3] = unit_direction_vector
+    cam_pose[:3, 3:] = position.T
+    cam_pose[3, :] = [0, 0, 0, 1]
+    cam_pose = cam_pose @ np.array([[-1, 0,  0, 0],
+                                    [0, -1,  0, 0],
+                                    [0,  0,  1, 0],
+                                    [0, 0, 0, 1]])
+
+    return Pose(cam_pose)
