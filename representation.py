@@ -4,14 +4,14 @@ from pose import *
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
-RED = (255, 0, 0)
+RED = (0, 0, 255)
 GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-YELLOW = (255, 255, 0)
+BLUE = (255, 0, 0)
+YELLOW = (0, 255, 255)
 MAGENTA = (255, 0, 255)
-CYAN = (0, 255, 255)
+CYAN = (255, 255, 0)
 
-DEFAULT_THICKNESS = 1
+DEFAULT_THICKNESS = 2
 
 
 class Representation:
@@ -47,8 +47,10 @@ class Representation:
         for label, point in points.items():
             self.add_dot(point, color, thickness)
 
-    def draw(self, frame, K, D, pose_rvec, tvec=None):
+    def draw(self, frame, K, D, camera_pose):
         object_points_list = list(self.points)
+        if len(object_points_list) < 1:
+            return
 
         object_points_map = {}
         for i in range(len(object_points_list)):
@@ -56,9 +58,10 @@ class Representation:
 
         object_points = np.float32(object_points_list)
 
-        pose = Pose(pose_rvec, tvec)
+        pose = camera_pose
+        # pose = (Pose(object_pose) @ Pose(camera_pose).invert()).invert()
 
-        frame_points = cv2.projectPoints(object_points, pose.rvec, pose.tvec, K, D)
+        frame_points = cv2.projectPoints(object_points, pose.rvec, pose.tvec, K, D)[0]
 
         for line in self.lines:
             object_start = line[0], line[1], line[2]
@@ -81,21 +84,21 @@ class Representation:
 class AxisArrow(Representation):
 
     def __init__(self, name="Arrow", color=RED, thickness=DEFAULT_THICKNESS, axis=2, axis_start=-0.05, axis_end=0.05,
-                 size=0.03):
+                 size=0.2):
         super(AxisArrow, self).__init__(name)
         size = (axis_end - axis_start) * size  # size is percentage
         if axis == 0:
             self.add_line((axis_start, 0, 0), (axis_end, 0, 0), color, thickness)
-            self.add_line((axis_end - size, -size, 0), (axis_end, 0, 0), color, thickness)
-            self.add_line((size, 0, axis_end - size), (axis_end, 0, 0), color, thickness)
+            self.add_line((axis_end - size, 0, -size), (axis_end, 0, 0), color, thickness)
+            self.add_line((axis_end - size, 0, size,), (axis_end, 0, 0), color, thickness)
         if axis == 1:
             self.add_line((0, axis_start, 0), (0, axis_end, 0), color, thickness)
             self.add_line((0, axis_end - size, -size), (0, axis_end, 0), color, thickness)
             self.add_line((0, axis_end - size, size), (0, axis_end, 0), color, thickness)
         if axis == 2:
             self.add_line((0, 0, axis_start), (0, 0, axis_end), color, thickness)
-            self.add_line((0, -size, axis_end - size), (0, 0, axis_end), color, thickness)
-            self.add_line((0, size, axis_end - size), (0, 0, axis_end), color, thickness)
+            self.add_line((-size, 0, axis_end - size), (0, 0, axis_end), color, thickness)
+            self.add_line((size, 0, axis_end - size), (0, 0, axis_end), color, thickness)
 
 
 class Axes(Representation):
@@ -149,4 +152,4 @@ class AxisCamera(Representation):
     def __init__(self, name="Camera", thickness=DEFAULT_THICKNESS, axis=2):
         super(AxisCamera, self).__init__(name)
         self.add_representation(AxisRectangle("Rectangle", (BLUE, RED, GREEN, RED), thickness, axis, (-0.05, 0.025, 0), 0.1, 0.05))
-        self.add_representation(AxisArrow("Arrow", WHITE, thickness, axis, -0.02, 0.05, 0.025))
+        self.add_representation(AxisArrow("Arrow", WHITE, thickness, axis, -0.02, 0.05, 0.25))

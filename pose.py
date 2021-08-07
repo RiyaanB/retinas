@@ -53,8 +53,8 @@ class Pose:
 
 
 def get_cam_pose(position, target):
-    position = np.array(position, dtype=float)
-    target = np.array(target, dtype=float)
+    position = np.array([position], dtype=float)
+    target = np.array([target], dtype=float)
     # GRAM-SCHMIDT PROCESS
     direction_vector = target - position
     unit_direction_vector = direction_vector / np.linalg.norm(direction_vector)

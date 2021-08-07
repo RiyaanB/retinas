@@ -17,7 +17,10 @@ def __is_iterable__(x):
 
 class RetinaBody:
 
-    def __init__(self, point_dict, pose=((0, 0, 0), (0, 0, 0)), representation=None):
+    def __init__(self, name="Body", point_dict=None, pose=((0, 0, 0), (0, 0, 0)), representation=None):
+        self.name = name
+        if point_dict is None:
+            point_dict = {}
         self.point_dict = point_dict
         if representation is None:
             self.representation = Representation(point_dict)
@@ -29,7 +32,7 @@ class RetinaBody:
 
 class RetinaCamera:
 
-    def __init__(self, streamer, get_view, pose=((0, 0, 0), (0, 0, 0)), representation=None):
+    def __init__(self, streamer, get_view=None, pose=((0, 0, 0), (0, 0, 0)), representation=None):
         self.streamer = streamer
         if representation is None:
             representation = AxisCamera(streamer.name)
