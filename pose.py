@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 
+PRINT_MODE = "RADIANS"
+
 
 class Pose:
 
@@ -49,29 +51,46 @@ class Pose:
         return Pose(np.linalg.inv(self.matrix))
 
     def __str__(self):
-        return "({}, {}, {}), ({}, {}, {})".format(*self.rvec, *self.tvec)
+        if PRINT_MODE == "RADIANS":
+            return "({}, {}, {}), ({}, {}, {})".format(*self.rvec, *self.tvec)
+        else:
+            norm = np.linalg.norm(self.rvec)
+            factor = (1./norm)
+            angle = norm*(180/np.pi)
+            return "{}deg ({}, {}, {}), ({}, {}, {})".format(angle, *(np.array(self.rvec)*factor), *self.tvec)
 
 
 def get_cam_pose(position, target):
-    # returns cTb, i.e. not body/world pose
+    # returns world pose of camera
     position = np.array([position], dtype=float)
     target = np.array([target], dtype=float)
     # GRAM-SCHMIDT PROCESS
     direction_vector = target - position
     unit_direction_vector = direction_vector / np.linalg.norm(direction_vector)
-    up_vector = np.array([[0,1,0]])
-    camera_right = np.cross(up_vector, unit_direction_vector)
-    camera_right /= np.linalg.norm(camera_right)
-    camera_up = np.cross(unit_direction_vector, camera_right)
-    cam_pose = np.zeros((4,4))
-    cam_pose[0, :3] = camera_right
-    cam_pose[1, :3] = camera_up
-    cam_pose[2, :3] = unit_direction_vector
-    cam_pose[:3, 3:] = position.T
+    up_vector = np.array([[0, 0, 1]])
+
+    z_hat = unit_direction_vector
+    x = (np.cross(z_hat, up_vector))
+    x_hat = x / np.linalg.norm(x)
+    y_hat = np.cross(z_hat, x_hat)
+
+    cam_pose = np.zeros((4, 4))
+
+    # print(x_hat.T)
+    # print(y_hat.T)
+    # print(z_hat.T)
+    # print(position.T)
+
+    cam_pose[:3, 0:1] = x_hat.T
+    cam_pose[:3, 1:2] = y_hat.T
+    cam_pose[:3, 2:3] = z_hat.T
+    cam_pose[:3, 3:4] = position.T
     cam_pose[3, :] = [0, 0, 0, 1]
-    cam_pose = cam_pose @ np.array([[-1, 0,  0, 0],
-                                    [0, -1,  0, 0],
-                                    [0,  0,  1, 0],
-                                    [0, 0, 0, 1]])
 
     return Pose(cam_pose)
+
+
+if __name__ == '__main__':
+    PRINT_MODE = "DEGREES"
+    a = get_cam_pose((0, -1., 0), (-1, 0, 0)).matrix
+    print(a)
