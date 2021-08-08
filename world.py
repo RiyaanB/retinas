@@ -6,8 +6,8 @@ from objects import *
 import utils.camera_streamer as cs
 import threading
 
-DEFAULT_CAMERA_POSITION = (0, -3, 0.51)
-DEFAULT_CAMERA_TARGET = (0., 0., 0.5)
+DEFAULT_CAMERA_POSITION = (0, -1.5, 0.4)
+DEFAULT_CAMERA_TARGET = (0., 0., 0.3)
 DEFAULT_WORLD_CAM_POSE = get_cam_pose(DEFAULT_CAMERA_POSITION, DEFAULT_CAMERA_TARGET)
 DEFAULT_CAMERA_DIMS = (720, 1280, 3)
 DEFAULT_K = cs.mac_K
@@ -67,7 +67,7 @@ if __name__ == '__main__':
         elif k % 256 == 32:
             # SPACE pressed
             pass
-
+        world.camera_pose = Pose(0,0,0.01,0,0,0) @ world.camera_pose
         cv2.imshow(world.name, world.draw())
 
     for a in range(5):
