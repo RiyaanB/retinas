@@ -13,6 +13,7 @@ DEFAULT_CAMERA_DIMS = (720, 1280, 3)
 DEFAULT_K = cs.mac_K
 DEFAULT_D = 0
 PI = np.pi
+DEBUG = True
 
 
 class World:
@@ -36,6 +37,9 @@ class World:
         for camera in self.cameras:
             # Pose(-0.4, 0.5, 0, -0.2, -0.2, 1)
             camera.representation.draw(frame, self.K, self.D, self.camera_pose, camera.pose)
+
+        if DEBUG:
+            print("Drew {} bodies and {} cameras".format(len(self.cameras), len(self.bodies)))
         return frame
 
 

@@ -13,6 +13,7 @@ CYAN = (255, 255, 0)
 
 DEFAULT_LINE_THICKNESS = 2
 DEFAULT_DOT_THICKNESS = 8
+DEBUG = True
 
 
 class Representation:
@@ -71,9 +72,7 @@ class Representation:
             frame_end = frame_points[object_points_map[object_end]].astype(int).ravel()
 
             color, thickness = self.lines[line]
-            print(self.name)
-            print(object_start)
-            print(frame_start)
+
             frame = cv2.line(frame, frame_start, frame_end, color, thickness)
 
         for dot in self.dots:
