@@ -48,7 +48,7 @@ class Representation:
         for label, point in points.items():
             self.add_dot(point, color, thickness)
 
-    def draw(self, frame, K, D, camera_pose):
+    def draw(self, frame, K, D, CAMERA_world_pose, body_world_pose):
         object_points_list = list(self.points)
         if len(object_points_list) < 1:
             return
@@ -59,10 +59,9 @@ class Representation:
 
         object_points = np.float32(object_points_list)
 
-        pose = camera_pose
-        # pose = (Pose(object_pose) @ Pose(camera_pose).invert()).invert()
-        print(pose)
-        frame_points = cv2.projectPoints(object_points, pose.rvec, pose.tvec, K, D)[0]
+        body_CAMERA_pose = CAMERA_world_pose.invert() @ body_world_pose
+
+        frame_points = cv2.projectPoints(object_points, body_CAMERA_pose.rvec, body_CAMERA_pose.tvec, K, D)[0]
 
         for line in self.lines:
             object_start = line[0], line[1], line[2]
