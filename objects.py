@@ -20,11 +20,11 @@ class RetinaBody:
     def __init__(self, name="Body", point_dict=None, pose=((0, 0, 0), (0, 0, 0)), representation=None):
         self.name = name
         if point_dict is None:
-            point_dict = {}
+            point_dict = {}, RED
         self.point_dict = point_dict
         if representation is None:
             self.representation = Representation(name)
-            self.representation.add_point_dict(point_dict)
+            self.representation.add_point_dict(point_dict[0], point_dict[1])
         else:
             self.representation = representation
 
