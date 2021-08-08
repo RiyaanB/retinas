@@ -17,14 +17,14 @@ def __is_iterable__(x):
 
 class RetinaBody:
 
-    def __init__(self, name="Body", point_dict=None, pose=((0, 0, 0), (0, 0, 0)), representation=None):
+    def __init__(self, name="Body", point_dict=None, pose=((0, 0, 0), (0, 0, 0)), representation=None, color=RED):
         self.name = name
         if point_dict is None:
-            point_dict = {}, RED
+            point_dict = {}
         self.point_dict = point_dict
         if representation is None:
             self.representation = Representation(name)
-            self.representation.add_point_dict(point_dict[0], point_dict[1])
+            self.representation.add_point_dict(point_dict, color)
         else:
             self.representation = representation
 

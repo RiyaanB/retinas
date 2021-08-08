@@ -44,22 +44,13 @@ if __name__ == '__main__':
     cameras = []
 
     world_point_dict = {1: (-0.5, 0.5, 0), 2: (0.5, 0.5, 0), 3: (0.5, -0.5, 0), 4: (-0.5, -0.5, 0), 5: (0, 0, 0)}
-    world2_point_dict = {1: (-0.5, 0.5, 1), 2: (0.5, 0.5, 0.5), 3: (0.5, -0.5, 0.5), 4: (-0.5, -0.5, 0.2)}
-    b0 = RetinaBody("World", (world_point_dict, RED), ((0, 0, 0), (0, 0, 0)))
-    b1 = RetinaBody("World", (world2_point_dict, YELLOW), ((0, 0, 0), (0, 0, 0)))
+    b0 = RetinaBody("World", world_point_dict, ((0, 0, 0), (0, 0, 0)), color=RED)
     bodies.append(b0)
-    bodies.append(b1)
-    bodies.append(RetinaBody("Cam", ({1: (-0.1, 0.1, 0)}, YELLOW), ((0, 0, 0), (0, 0, 0)), AxisCamera()))
-    bodies.append(RetinaBody("Cam", ({1: (-0.1, 0.1, 0)}, YELLOW), ((0, 0, 0), (0, 1, 1)), AxisCamera()))
-    bodies.append(RetinaBody("Cam", ({1: (-0.1, 0.1, 0)}, YELLOW), ((0, 0, 0), (1, 1, 1)), AxisCamera()))
 
-
-
-
-    # get_cam_pose((0.01,-0.01,0.01), (0,0,0)).invert()
-    # c0 = RetinaCamera(cs.WebcamStreamer(0, cs.mac_K, 0), None, get_cam_pose((0, 0.5, 0.5), (0, 0, 0)).invert())
-    # print(c0.pose.invert())
-    # cameras.append(c0)
+    get_cam_pose((0.01, -0.01, 0.01), (0, 0, 0)).invert()
+    c0 = RetinaCamera(cs.WebcamStreamer(0, cs.mac_K, 0), None, get_cam_pose((0.5, 0.5, 0.5), (0, 0, 0)))
+    print(c0.pose.invert())
+    cameras.append(c0)
 
     world = World("World", bodies, cameras)
 
