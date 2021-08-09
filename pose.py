@@ -71,6 +71,11 @@ def get_cam_pose(position, target):
 
     z_hat = unit_direction_vector
     x = (np.cross(z_hat, up_vector))
+    if np.linalg.norm(x) == 0:
+        x = get_cam_pose.PREV_X
+    else:
+        get_cam_pose.PREV_X = x
+
     x_hat = x / np.linalg.norm(x)
     y_hat = np.cross(z_hat, x_hat)
 
@@ -89,6 +94,8 @@ def get_cam_pose(position, target):
 
     return Pose(cam_pose)
 
+
+get_cam_pose.PREV_X = np.array([[1, 0, 0]])
 
 if __name__ == '__main__':
     PRINT_MODE = "DEGREES"
