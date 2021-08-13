@@ -6,8 +6,8 @@ from objects import *
 import utils.camera_streamer as cs
 import threading
 
-DEFAULT_CAMERA_POSITION = (0, -1.5, 0.4)
-DEFAULT_CAMERA_TARGET = (0., 0., 0.3)
+DEFAULT_CAMERA_POSITION = (0, -1.8, 1)
+DEFAULT_CAMERA_TARGET = (0., 0., -0.1)
 DEFAULT_WORLD_CAM_POSE = get_cam_pose(DEFAULT_CAMERA_POSITION, DEFAULT_CAMERA_TARGET)
 DEFAULT_CAMERA_DIMS = (720, 1280, 3)
 DEFAULT_K = cs.mac_K
@@ -39,7 +39,7 @@ class World:
             camera.representation.draw(frame, self.K, self.D, self.camera_pose, camera.pose)
 
         if DEBUG:
-            print("Drew {} bodies and {} cameras".format(len(self.cameras), len(self.bodies)))
+            print("Drew {} cameras and {} bodies".format(len(self.cameras), len(self.bodies)))
         return frame
 
 
@@ -47,14 +47,21 @@ if __name__ == '__main__':
     bodies = []
     cameras = []
 
-    world_point_dict = {1: (-0.5, 0.5, 0), 2: (0.5, 0.5, 0), 3: (0.5, -0.5, 0), 4: (-0.5, -0.5, 0), 5: (0, 0, 0)}
-    b0 = RetinaBody("World", world_point_dict, ((0, 0, 0), (0, 0, 0)), color=RED)
-    bodies.append(b0)
+    # world_point_dict = {1: (-0.5, 0.5, 0), 2: (0.5, 0.5, 0), 3: (0.5, -0.5, 0), 4: (-0.5, -0.5, 0), 5: (0, 0, 0)}
+    # b0 = RetinaBody("World", world_point_dict, ((0, 0, 0), (0, 0, 0)), color=RED)
+    # b1 = RetinaBody("Robot Link", {}, ((0,0,0),(0,0,0)),color=YELLOW,representation=Axes())
+    # bodies.append(b0)
+    # bodies.append(b1)
 
-    get_cam_pose((0.01, -0.01, 0.01), (0, 0, 0)).invert()
-    c0 = RetinaCamera(cs.WebcamStreamer(0, cs.mac_K, 0), None, get_cam_pose((0.5, 0.5, 0.5), (0, 0, 0)))
-    print(c0.pose.invert())
-    cameras.append(c0)
+    # c0 = RetinaCamera(cs.WebcamStreamer(0, cs.mac_K, 0), None, get_cam_pose((0.5, 0.5, 0.5), (0, 0, 0)))
+    # print(c0.pose.invert())
+    # cameras.append(c0)
+
+    bodies.append(RetinaBody(representation=AxisRectangle("World", [GREEN, RED, BLUE, RED], top_left=(-0.5, 0.5, 0), width=1.0, height=1.0)))
+    bodies.append(RetinaBody(
+        representation=Axes()))
+
+
 
     world = World("World", bodies, cameras)
 
@@ -68,6 +75,7 @@ if __name__ == '__main__':
             # SPACE pressed
             pass
         world.camera_pose = Pose(0,0,0.01,0,0,0) @ world.camera_pose
+        # b1.pose = Pose(0.1,0,0,0,0,0) @ b1.pose
         cv2.imshow(world.name, world.draw())
 
     for a in range(5):

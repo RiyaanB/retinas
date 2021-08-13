@@ -104,7 +104,7 @@ class AxisArrow(Representation):
 
 class Axes(Representation):
 
-    def __init__(self, name="Axes", length=0.1, color=(RED, BLUE, GREEN), thickness=DEFAULT_LINE_THICKNESS):
+    def __init__(self, name="Axes", length=0.1, color=(RED, GREEN, BLUE), thickness=DEFAULT_LINE_THICKNESS):
         super(Axes, self).__init__(name)
         if isinstance(color[0], int):
             color = [color, color, color]
