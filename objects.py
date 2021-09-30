@@ -1,7 +1,7 @@
 import numpy as np
 from representation import *
 from pose import *
-import apriltag
+# import apriltag
 
 MIN_POINTS = 4
 MIN_REPRESENTATION = 1

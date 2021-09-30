@@ -49,9 +49,9 @@ if __name__ == '__main__':
 
     # world_point_dict = {1: (-0.5, 0.5, 0), 2: (0.5, 0.5, 0), 3: (0.5, -0.5, 0), 4: (-0.5, -0.5, 0), 5: (0, 0, 0)}
     # b0 = RetinaBody("World", world_point_dict, ((0, 0, 0), (0, 0, 0)), color=RED)
-    # b1 = RetinaBody("Robot Link", {}, ((0,0,0),(0,0,0)),color=YELLOW,representation=Axes())
+    b1 = RetinaBody("Robot Link", {}, Pose((0,0,0),(0,0,0)),color=YELLOW,representation=AxisArrow())
     # bodies.append(b0)
-    # bodies.append(b1)
+    bodies.append(b1)
 
     # c0 = RetinaCamera(cs.WebcamStreamer(0, cs.mac_K, 0), None, get_cam_pose((0.5, 0.5, 0.5), (0, 0, 0)))
     # print(c0.pose.invert())
@@ -60,7 +60,6 @@ if __name__ == '__main__':
     bodies.append(RetinaBody(representation=AxisRectangle("World", [GREEN, RED, BLUE, RED], top_left=(-0.5, 0.5, 0), width=1.0, height=1.0)))
     bodies.append(RetinaBody(
         representation=Axes()))
-
 
 
     world = World("World", bodies, cameras)
@@ -74,8 +73,9 @@ if __name__ == '__main__':
         elif k % 256 == 32:
             # SPACE pressed
             pass
-        world.camera_pose = Pose(0,0,0.01,0,0,0) @ world.camera_pose
-        # b1.pose = Pose(0.1,0,0,0,0,0) @ b1.pose
+        world.camera_pose = Pose(0,0,0.04,0,0,0) @ world.camera_pose
+        # b1.pose = Pose(0,0,1,0,0,0)
+        world.bodies[0].pose = Pose(0,0,0.1,0,0,0.001) @ world.bodies[0].pose
         cv2.imshow(world.name, world.draw())
 
     for a in range(5):
