@@ -4,7 +4,7 @@ import numpy as np
 from threading import Thread
 import time
 
-URL = "http://192.168.1.130:8080/shot.jpg"
+URL = "http://192.168.108.79:8080/shot.jpg"
 IMAGE_WIDTH = 800
 
 mac_K = np.array([

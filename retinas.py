@@ -5,10 +5,12 @@ import numpy as np
 from threading import Thread
 import time
 
-from pose import Pose
+from objects import RetinaCamera
+from pose import Pose, get_cam_pose
 from test_bodies.cube_body import cube0_body, cube1_body
 from test_bodies.world_body_4_corners import world_body
 from utils.convex_hull import get_convex_hull_area
+from world import World
 
 DEFAULT_APRILTAG_DETECTOR = apriltag.Detector()
 STRENGTH_CONSTANT = 1   # k
@@ -66,19 +68,20 @@ class Retinas(Thread):
 
         self.world_camera_poses = {}
         self.world_body_poses = {}
+        self.__is__running__ = True
         self.start()
 
     def run(self):
         I = self.I
         J = self.J
-        N = {}  # IxJ --> [LxP]
-        A = {}  # IxJ --> R
-        T = {}  # IxJ --> R^6
-        E = {}  # IxJ --> R
-        G = {}  # IxJ --> R
-        graph = {}  # IxJ --> [0,1]
 
-        while True:
+        while self.__is__running__:
+            N = {}  # IxJ --> [LxP]
+            A = {}  # IxJ --> R
+            T = {}  # IxJ --> R^6
+            E = {}  # IxJ --> R
+            G = {}  # IxJ --> R
+            graph = {}  # IxJ --> [0,1]
             # print("hunumunu")
             for j in range(J):
                 cj_observations = self.observers[j].get_observation()
@@ -95,6 +98,8 @@ class Retinas(Thread):
                         N[i, j][1].append(point)
                     else:
                         N[i, j] = [label], [point]
+
+
                 for i, j in N:
                     observer = self.observers[j]
                     body = self.bodies[i]
@@ -113,6 +118,7 @@ class Retinas(Thread):
                     row.append(None)
                 pose_observations.append(row)
 
+            self.T = T
             for i, j in mst:
                 pose_observations[i][j] = T[i, j]
 
@@ -132,18 +138,30 @@ class Retinas(Thread):
 
                     for j in range(J):
                         if (pose_observations[i][j] is not None) and (j not in world_camera_poses):
-                            fringe_j.append(j)
+                            fringe_j.append((j, i))
                 if len(fringe_j) > 0:
                     j, parent = fringe_j.pop(-1)
 
-                    world_camera_poses[j] = pose_observations[parent][j] @ world_body_poses[parent]     # PROBABLY WRONG
+                    # print(f'{j}  {world_body_poses[parent]}  {pose_observations[parent][j]}')
+
+                    world_camera_poses[j] = pose_observations[parent][j] @ world_body_poses[parent]    # PROBABLY WRONG
 
                     for i in range(I):
                         if (pose_observations[i][j] is not None) and (i not in world_body_poses):
-                            fringe_i.append(i)
+                            fringe_i.append((i, j))
 
             self.world_camera_poses = world_camera_poses
             self.world_body_poses = world_body_poses
+            for i in range(len(bodies)):
+                if i in world_body_poses:
+                    bodies[i].pose = world_body_poses[i]
+                else:
+                    bodies[i].pose = Pose(0,0,0,10000,10000,10000)
+            for j in range(len(cameras)):
+                if j in world_camera_poses:
+                    cameras[j].pose = world_camera_poses[j]
+                else:
+                    cameras[j].pose = Pose(0,0,0,10000,10000,10000)
 
     def get_mst(self, graph):
         edges = list(graph.items())
@@ -166,6 +184,8 @@ class Retinas(Thread):
         return np.power(np.sum(np.power(projected - points, 2)), 0.5)
 
     def do_pnp(self, labels, points, observer, body):
+        print(labels)
+        print(points)
         visible_body = labels, []
         for label in labels:
             visible_body[1].append(body.point_dict[label])
@@ -174,17 +194,44 @@ class Retinas(Thread):
             #         visible_body[1].append(body[1][l])
         # print(np.array(points))
         flag, rvec, tvec = cv2.solvePnP(np.array(visible_body[1]), np.array(points), observer.camera_streamer.K, observer.camera_streamer.D, flags=cv2.SOLVEPNP_EPNP)
+        # print(f'{observer.camera_streamer.name} {body.name} {Pose(rvec, tvec)}')
         return Pose(rvec, tvec)
 
 
 if __name__ == '__main__':
-    streamer = cs.WebcamStreamer(0, cs.mac_K)
-    # streamer = cs.RemoteStreamer(cs.URL)
+    # DEBUG = False
+    # streamer = cs.WebcamStreamer(0, cs.mac_K)
+    streamer = cs.RemoteStreamer(cs.URL, cs.oneplus_8t_K)
     observer = ApriltagObserver(streamer)
     observers = [observer]
     bodies = [world_body, cube0_body, cube1_body]
 
+    cameras = []
+    cameras.append(RetinaCamera(observer.camera_streamer, None, get_cam_pose((0.25, -0.5, 0.5), (0.25, 0.25, 0))))
+
     my_retinas = Retinas(observers, bodies)
     # while True:
-    #     print(my_retinas.world_camera_poses)
-    #     time.sleep(0.1)
+    #     if 0 in my_retinas.world_camera_poses:
+    #         # print(my_retinas.world_camera_poses[0])
+    #         time.sleep(0.1)
+
+    world = World("World", bodies, cameras, camera_pose=get_cam_pose((0.25, -0.5, 2), (0.25, 0.25, 0)))
+
+    while True:
+        k = cv2.waitKey(1)
+        if k % 256 == 27:
+            # ESC pressed
+            print("Escape hit, closing...")
+            break
+        elif k % 256 == 32:
+            # SPACE pressed
+            pass
+        cv2.imshow(world.name, world.draw())
+
+    my_retinas.__is__running__ = False
+
+    for a in range(30):
+        cv2.destroyWindow(world.name)
+
+    exit()
+    quit()
