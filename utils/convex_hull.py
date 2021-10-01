@@ -5,6 +5,7 @@ import math
 
 
 def get_convex_hull_area(points):
+    # print(points)
     hull = ConvexHull(points)
     return hull.volume
 

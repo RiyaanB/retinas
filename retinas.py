@@ -3,6 +3,7 @@ import cv2
 import utils.camera_streamer as cs
 import numpy as np
 from threading import Thread
+import time
 
 from pose import Pose
 from test_bodies.cube_body import cube0_body, cube1_body
@@ -30,6 +31,8 @@ class ApriltagObserver(Observer):
 
     def get_observation(self):
         ret, frame = self.camera_streamer.read()
+        if not ret:
+            return [], np.array([])
         grayscale_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         results = self.detector.detect(grayscale_frame)
         label_list = []
@@ -39,7 +42,8 @@ class ApriltagObserver(Observer):
             for corner in range(4):
                 label_list.append((tag_id, corner))
                 point_list.append(r.corners[corner])
-        return label_list, np.array(point_list).T
+        # print("friwyf", label_list)
+        return label_list, np.array(point_list)
 
 
 class Retinas(Thread):
@@ -52,13 +56,13 @@ class Retinas(Thread):
         self.J = len(observers)
         self.I = len(bodies)
 
-        self.tag_map = tag_map
         if tag_map is None:
             tag_map = {}
             for body in bodies:
                 point_dict = body.point_dict
                 for label in point_dict:
-                    tag_map[label] = body
+                    tag_map[label] = bodies.index(body)
+        self.tag_map = tag_map
 
         self.world_camera_poses = {}
         self.world_body_poses = {}
@@ -75,27 +79,31 @@ class Retinas(Thread):
         graph = {}  # IxJ --> [0,1]
 
         while True:
+            # print("hunumunu")
             for j in range(J):
                 cj_observations = self.observers[j].get_observation()
-                for observation_number in range(len(cj_observations)):
-                    label = cj_observations[observation_number]
-                    point = cj_observations[observation_number]
+                # if not len(cj_observations[0]) == len(cj_observations[1]):
+                # print(f'Labels: {(cj_observations[0])}')
+                # print(f'Points: {(cj_observations[1].shape)}')
+                for observation_number in range(len(cj_observations[0])):
+                    label = cj_observations[0][observation_number]
+                    point = cj_observations[1][observation_number]
+                    # print(point)
                     i = self.tag_map[label]
                     if (i, j) in N:
                         N[i, j][0].append(label)
                         N[i, j][1].append(point)
                     else:
-                        N[i, j][0] = [label]
-                        N[i, j][1] = [point]
-                    for i, j in N:
-                        observer = self.observers[j]
-                        body = self.bodies[i]
-                        labels, points = N[i, j]
-                        A[i, j] = get_convex_hull_area(points)
-                        T[i, j] = self.do_pnp(labels, points, observer, body)
-                        E[i, j] = self.get_total_reprojection_error(labels, points, observer, body, T[i, j])
-                        G[i, j] = (len(N[i, j]) ** 0.5) * A[i, j] * E[i, j]
-                        graph[i, j] = - np.log(1 + np.exp(-STRENGTH_CONSTANT * G[i, j]))
+                        N[i, j] = [label], [point]
+                for i, j in N:
+                    observer = self.observers[j]
+                    body = self.bodies[i]
+                    labels, points = N[i, j]
+                    A[i, j] = get_convex_hull_area(points)
+                    T[i, j] = self.do_pnp(labels, points, observer, body)
+                    E[i, j] = self.get_total_reprojection_error(labels, points, observer, body, T[i, j])
+                    G[i, j] = (len(N[i, j]) ** 0.5) * A[i, j] * E[i, j]
+                    graph[i, j] = - np.log(1 + np.exp(-STRENGTH_CONSTANT * G[i, j]))
 
             mst = self.get_mst(graph)
             pose_observations = []
@@ -150,19 +158,22 @@ class Retinas(Thread):
     def get_total_reprojection_error(self, labels, points, observer, body, pose):
         visible_body = labels, []
         for label in labels:
-            for l in range(len(body[1])):
-                if body[0][l] == label:
-                    visible_body[1].append(body[1][l])
-        projected = cv2.projectPoints(visible_body[1], pose.rvec, pose.tvec, observer.camera_streamer.K, observer.camera_streamer.D)
+            visible_body[1].append(body.point_dict[label])
+            # for l in range(len(body[1])):
+            #     if body[0][l] == label:
+            #         visible_body[1].append(body[1][l])
+        projected, _ = cv2.projectPoints(np.array(visible_body[1]), pose.rvec, pose.tvec, observer.camera_streamer.K, observer.camera_streamer.D)
         return np.power(np.sum(np.power(projected - points, 2)), 0.5)
 
     def do_pnp(self, labels, points, observer, body):
         visible_body = labels, []
         for label in labels:
-            for l in range(len(body[1])):
-                if body[0][l] == label:
-                    visible_body[1].append(body[1][l])
-        flag, rvec, tvec = cv2.solvePnP(np.array(visible_body[1]), points, observer.camera_streamer.K, observer.camera_streamer.D, flags=cv2.SOLVEPNP_EPNP)
+            visible_body[1].append(body.point_dict[label])
+            # for l in range(len(body[1])):
+            #     if body[0][l] == label:
+            #         visible_body[1].append(body[1][l])
+        # print(np.array(points))
+        flag, rvec, tvec = cv2.solvePnP(np.array(visible_body[1]), np.array(points), observer.camera_streamer.K, observer.camera_streamer.D, flags=cv2.SOLVEPNP_EPNP)
         return Pose(rvec, tvec)
 
 
@@ -174,5 +185,6 @@ if __name__ == '__main__':
     bodies = [world_body, cube0_body, cube1_body]
 
     my_retinas = Retinas(observers, bodies)
-    while True:
-        print(my_retinas.world_camera_poses)
+    # while True:
+    #     print(my_retinas.world_camera_poses)
+    #     time.sleep(0.1)

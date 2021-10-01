@@ -42,7 +42,7 @@ def get_cube_point_dict(x):
 
 
 CUBE_0_POINT_DICT = get_cube_point_dict(0)
-CUBE_1_POINT_DICT = get_cube_point_dict(1)
+CUBE_1_POINT_DICT = get_cube_point_dict(6)
 
 cube0_body = RetinaBody("Cube0", CUBE_0_POINT_DICT)
 cube1_body = RetinaBody("Cube1", CUBE_1_POINT_DICT)
