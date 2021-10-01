@@ -35,6 +35,7 @@ class Representation:
         self.lines[line_key] = color, thickness
 
     def add_dot(self, point, color=RED, thickness=DEFAULT_DOT_THICKNESS):
+        point = point[0], point[1], point[2]
         self.add_point(point)
         self.dots[point] = color, thickness
 
