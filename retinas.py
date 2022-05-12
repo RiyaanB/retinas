@@ -4,8 +4,13 @@ import utils.camera_streamer as cs
 import numpy as np
 from threading import Thread
 import time
+import networkx as nx
+import numpy as np
 
-from objects import RetinaCamera
+import matplotlib.pyplot as plt
+
+
+from objects import RetinaCamera, RetinaBody
 from pose import Pose, get_cam_pose
 from test_bodies.cube_body import cube0_body, cube1_body
 from test_bodies.world_body_4_corners import world_body
@@ -15,56 +20,58 @@ from world import World
 DEFAULT_APRILTAG_DETECTOR = apriltag.Detector()
 STRENGTH_CONSTANT = 1   # k
 
+class ApriltagObserver:
 
-class Observer:
-
-    def __init__(self, camera_streamer):
+    def __init__(self, camera_streamer, threshold=True):
         self.camera_streamer = camera_streamer
+        self.threshold = threshold
+        self.detector = apriltag.Detector()
 
-    def get_observation(self):
-        pass
-
-
-class ApriltagObserver(Observer):
-
-    def __init__(self, camera_streamer, detector=DEFAULT_APRILTAG_DETECTOR):
-        super().__init__(camera_streamer)
-        self.detector = detector
+        self.grayscale_frame = None
+        self.frame = None
 
     def get_observation(self):
         ret, frame = self.camera_streamer.read()
+
         if not ret:
-            return [], np.array([])
+            return [], np.empty((0,2))
+
         grayscale_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        if self.threshold:
+            _ , grayscale_frame = cv2.threshold(grayscale_frame, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
         results = self.detector.detect(grayscale_frame)
+
+        # print("After detect")
         label_list = []
         point_list = []
         for r in results:
-            tag_id = r.tag_id
             for corner in range(4):
-                label_list.append((tag_id, corner))
+                label_list.append((r.tag_id, corner))
+                frame = cv2.circle(frame, np.array(r.corners[corner], dtype=np.int32), radius=0, color=(0,0, corner*63), thickness=32)
                 point_list.append(r.corners[corner])
-        # print("friwyf", label_list)
+        # cv2.imshow(self.camera_streamer.name, grayscale_frame)
+        # print("Showed")
+        # print(len(label_list))
+        self.frame = frame
         return label_list, np.array(point_list)
 
 
 class Retinas(Thread):
 
-    def __init__(self, observers, bodies, tag_map=None):
+    def __init__(self, observers, bodies, cameras):
         super().__init__()
 
         self.observers = observers
         self.bodies = bodies
+        self.cameras = cameras
         self.J = len(observers)
         self.I = len(bodies)
 
-        if tag_map is None:
-            tag_map = {}
-            for body in bodies:
-                point_dict = body.point_dict
-                for label in point_dict:
-                    tag_map[label] = bodies.index(body)
-        self.tag_map = tag_map
+        self.tag_map = {}
+        for body in bodies:
+            point_dict = body.point_dict
+            for label in point_dict:
+                self.tag_map[label] = bodies.index(body)
 
         self.world_camera_poses = {}
         self.world_body_poses = {}
@@ -72,166 +79,139 @@ class Retinas(Thread):
         self.start()
 
     def run(self):
+
         I = self.I
         J = self.J
 
         while self.__is__running__:
-            N = {}  # IxJ --> [LxP]
-            A = {}  # IxJ --> R
-            T = {}  # IxJ --> R^6
-            E = {}  # IxJ --> R
-            G = {}  # IxJ --> R
-            graph = {}  # IxJ --> [0,1]
-            # print("hunumunu")
+            # All the following are J x I
+            N = {}
+            A = {}
+            T = {}
+            E = {}
+            G = {}
+            world_camera_poses = self.world_camera_poses
+            world_body_poses = self.world_body_poses
+            counter = 0
             for j in range(J):
-                cj_observations = self.observers[j].get_observation()
-                # if not len(cj_observations[0]) == len(cj_observations[1]):
-                # print(f'Labels: {(cj_observations[0])}')
-                # print(f'Points: {(cj_observations[1].shape)}')
-                for observation_number in range(len(cj_observations[0])):
-                    label = cj_observations[0][observation_number]
-                    point = cj_observations[1][observation_number]
-                    # print(point)
+                k_labels, k_points = self.observers[j].get_observation()
+                
+                # print(len(k_labels))
+                for k in range(len(k_labels)):
+                    label, point = k_labels[k], k_points[k]
                     i = self.tag_map[label]
-                    if (i, j) in N:
-                        N[i, j][0].append(label)
-                        N[i, j][1].append(point)
+                    if (j, i) in N:
+                        N[j, i][0].append(label)
+                        N[j, i][1].append(point)
                     else:
-                        N[i, j] = [label], [point]
+                        counter += 1
+                        N[j, i] = [label], [point]
 
+            for j, i in N:
+                observer = self.observers[j]
+                body = self.bodies[i]
+                labels, points = N[j, i]
 
-                for i, j in N:
-                    observer = self.observers[j]
-                    body = self.bodies[i]
-                    labels, points = N[i, j]
-                    A[i, j] = get_convex_hull_area(points)
-                    T[i, j] = self.do_pnp(labels, points, observer, body)
-                    E[i, j] = self.get_total_reprojection_error(labels, points, observer, body, T[i, j])
-                    G[i, j] = (len(N[i, j]) ** 0.5) * A[i, j] * E[i, j]
-                    graph[i, j] = - np.log(1 + np.exp(-STRENGTH_CONSTANT * G[i, j]))
+                A[j,i] = get_convex_hull_area(points)
+                T[j,i] = self.do_pnp(labels, points, observer, body)
+                E[j,i] = self.get_total_reprojection_error(labels, points, observer, body, T[j,i])
+                temp = (len(N[j, i])**0.5) * A[j,i] * E[j,i]
+                G[j,i] = - np.log(1 + np.exp(-STRENGTH_CONSTANT) * temp)
 
-            mst = self.get_mst(graph)
-            pose_observations = []
-            for i in range(I):
-                row = []
-                for j in range(J):
-                    row.append(None)
-                pose_observations.append(row)
+            nodes = ['b'+str(i) for i in range(I)] + ['c'+str(j) for j in range(J)]
+            graph = nx.Graph()
+            graph.add_nodes_from(nodes)
 
-            self.T = T
-            for i, j in mst:
-                pose_observations[i][j] = T[i, j]
+            for j, i in G:
+                graph.add_edge('b'+str(i), 'c'+str(j))
+                graph.add_edge('c'+str(j), 'b'+str(i))
 
-            world_camera_poses = {}
-            world_body_poses = {}
+            # nx.draw_circular(graph, with_labels=True)
+            # plt.savefig('plotgraph.png', dpi=300, bbox_inches='tight')
+            # print(len(graph.edges))
+            paths = nx.shortest_path(graph.to_undirected(), source='b0')
+            # print((0,0) in T)
 
-            fringe_i = [(0, None)]
-            fringe_j = []
-            while not len(fringe_i) + len(fringe_j) == 0:
-                if len(fringe_i) > 0:
-                    i, parent = fringe_i.pop(-1)
-
-                    if parent is None:
-                        world_body_poses[i] = Pose(0,0,0,0,0,0)
+            for node in paths:
+                path = paths[node]
+                pose = Pose(0,0,0,0,0,0)
+                cur = path[0]
+                for step in path[1:]:
+                    # print()
+                    source = int(cur[1])
+                    destin = int(step[1])
+                    if cur[0] == 'c':
+                        pose = pose @ T[source, destin]
+                    elif cur[0] == 'b':
+                        pose = pose @ T[destin, source].invert()
                     else:
-                        world_body_poses[i] = world_camera_poses[parent] @ pose_observations[i][parent] # PROBABLY WRONG
+                        raise Exception()
+                    cur = step
+                if node[0] == 'b':
+                    world_body_poses[int(node[1])] = pose
+                    self.bodies[int(node[1])].pose = pose
+                if node[0] == 'c':
+                    world_camera_poses[int(node[1])] = pose
+                    self.cameras[int(node[1])].pose = pose
 
-                    for j in range(J):
-                        if (pose_observations[i][j] is not None) and (j not in world_camera_poses):
-                            fringe_j.append((j, i))
-                if len(fringe_j) > 0:
-                    j, parent = fringe_j.pop(-1)
-
-                    # print(f'{j}  {world_body_poses[parent]}  {pose_observations[parent][j]}')
-
-                    world_camera_poses[j] = pose_observations[parent][j] @ world_body_poses[parent]    # PROBABLY WRONG
-
-                    for i in range(I):
-                        if (pose_observations[i][j] is not None) and (i not in world_body_poses):
-                            fringe_i.append((i, j))
+            for i, body in enumerate(self.bodies):
+                if i not in world_body_poses:
+                    world_body_poses[i] = None
+                    self.bodies[i].pose = None
+            for j, camera in enumerate(self.cameras):
+                if j not in world_camera_poses:
+                    world_camera_poses[j] = None
+                    self.cameras[j].pose = None
 
             self.world_camera_poses = world_camera_poses
             self.world_body_poses = world_body_poses
-            for i in range(len(bodies)):
-                if i in world_body_poses:
-                    bodies[i].pose = world_body_poses[i]
-                else:
-                    bodies[i].pose = Pose(0,0,0,10000,10000,10000)
-            for j in range(len(cameras)):
-                if j in world_camera_poses:
-                    cameras[j].pose = world_camera_poses[j]
-                else:
-                    cameras[j].pose = Pose(0,0,0,10000,10000,10000)
-
-    def get_mst(self, graph):
-        edges = list(graph.items())
-        edges.sort(key=lambda x: x[1], reverse=True)
-        visited = {}
-        mst = {}
-        for source_dest, weight in edges:
-            if source_dest[1] not in visited:
-                mst[source_dest] = weight
-        return mst
 
     def get_total_reprojection_error(self, labels, points, observer, body, pose):
         visible_body = labels, []
         for label in labels:
             visible_body[1].append(body.point_dict[label])
-            # for l in range(len(body[1])):
-            #     if body[0][l] == label:
-            #         visible_body[1].append(body[1][l])
+
         projected, _ = cv2.projectPoints(np.array(visible_body[1]), pose.rvec, pose.tvec, observer.camera_streamer.K, observer.camera_streamer.D)
-        return np.power(np.sum(np.power(projected - points, 2)), 0.5)
+        return np.power(np.sum(np.power(projected-points, 2)), 0.5)
 
     def do_pnp(self, labels, points, observer, body):
-        print(labels)
-        print(points)
         visible_body = labels, []
         for label in labels:
             visible_body[1].append(body.point_dict[label])
-            # for l in range(len(body[1])):
-            #     if body[0][l] == label:
-            #         visible_body[1].append(body[1][l])
-        # print(np.array(points))
+
         flag, rvec, tvec = cv2.solvePnP(np.array(visible_body[1]), np.array(points), observer.camera_streamer.K, observer.camera_streamer.D, flags=cv2.SOLVEPNP_EPNP)
-        # print(f'{observer.camera_streamer.name} {body.name} {Pose(rvec, tvec)}')
+        # print(Pose(rvec, tvec))
+        # print(Pose(rvec, tvec).invert())
         return Pose(rvec, tvec)
 
 
+
 if __name__ == '__main__':
-    # DEBUG = False
-    # streamer = cs.WebcamStreamer(0, cs.mac_K)
-    streamer = cs.RemoteStreamer(cs.URL, cs.oneplus_8t_K)
-    observer = ApriltagObserver(streamer)
-    observers = [observer]
+
+    camera_streamers = []
+
+    # camera_streamers.append(cs.WebcamStreamer('rtp://192.168.0.147:554', cs.mac_K))
+
+    camera_streamers.append(cs.WebcamStreamer('rtsp://192.168.0.77:554', cs.iphone13_K))
+
+    camera_streamers.append(cs.WebcamStreamer('rtsp://192.168.0.120:554', cs.iphone13_pro_K))
+
+    camera_streamers.append(cs.WebcamStreamer('rtsp://192.168.0.226:554', cs.ipadpro4th_K))
+
+
     bodies = [world_body, cube0_body, cube1_body]
 
-    cameras = []
-    cameras.append(RetinaCamera(observer.camera_streamer, None, get_cam_pose((0.25, -0.5, 0.5), (0.25, 0.25, 0))))
+    cameras = [RetinaCamera(camera_streamer) for camera_streamer in camera_streamers]
+    observers = [ApriltagObserver(camera_streamer) for camera_streamer in camera_streamers]
 
-    my_retinas = Retinas(observers, bodies)
-    # while True:
-    #     if 0 in my_retinas.world_camera_poses:
-    #         # print(my_retinas.world_camera_poses[0])
-    #         time.sleep(0.1)
-
-    world = World("World", bodies, cameras, camera_pose=get_cam_pose((0.25, -0.5, 2), (0.25, 0.25, 0)))
+    world = World("My World", bodies, cameras)
+    world.camera_pose = get_cam_pose((0.27, -1, 1),(0.27, 0.4, 0.3))
+    retinas = Retinas(observers, bodies, cameras)
 
     while True:
-        k = cv2.waitKey(1)
-        if k % 256 == 27:
-            # ESC pressed
-            print("Escape hit, closing...")
-            break
-        elif k % 256 == 32:
-            # SPACE pressed
-            pass
-        cv2.imshow(world.name, world.draw())
 
-    my_retinas.__is__running__ = False
+        for j, streamer in enumerate(camera_streamers):
+            if streamer.ret and (observers[j].frame is not None):
+                cv2.imshow(f"camera frame {j}", observers[j].frame)
 
-    for a in range(30):
-        cv2.destroyWindow(world.name)
-
-    exit()
-    quit()
+        world.display()
