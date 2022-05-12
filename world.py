@@ -13,7 +13,7 @@ DEFAULT_CAMERA_DIMS = (720, 1280, 3)
 DEFAULT_K = cs.mac_K
 DEFAULT_D = 0
 PI = np.pi
-DEBUG = True
+DEBUG = False
 
 
 class World:
@@ -31,17 +31,30 @@ class World:
     def draw(self):
         frame = np.zeros(self.camera_dims)
         for body in self.bodies:
-            # Pose(0, 0, 0, 0, 0.2, 1)
-            body.representation.draw(frame, self.K, self.D, self.camera_pose, body.pose)
+            # print(body.pose)
+            if body.pose:
+                # print("DRAWING NON NONE")
+                body.representation.draw(frame, self.K, self.D, self.camera_pose, body.pose)
+            # else:
+                # print(self.name, "not detected")
 
         for camera in self.cameras:
-            # Pose(-0.4, 0.5, 0, -0.2, -0.2, 1)
-            camera.representation.draw(frame, self.K, self.D, self.camera_pose, camera.pose)
+            # print(camera.pose)
+            if camera.pose:
+                camera.representation.draw(frame, self.K, self.D, self.camera_pose, camera.pose)
 
         if DEBUG:
             print("Drew {} cameras and {} bodies".format(len(self.cameras), len(self.bodies)))
         return frame
 
+    def display(self):
+        cv2.imshow(self.name, self.draw())
+        k = cv2.waitKey(1)
+        if k % 256 == 27:
+            # ESC pressed
+            print("Escape hit, closing...")
+            for a in range(5):
+                cv2.destroyWindow(self.name)
 
 if __name__ == '__main__':
     bodies = []
@@ -65,18 +78,6 @@ if __name__ == '__main__':
     world = World("World", bodies, cameras)
 
     while True:
-        k = cv2.waitKey(1)
-        if k % 256 == 27:
-            # ESC pressed
-            print("Escape hit, closing...")
-            break
-        elif k % 256 == 32:
-            # SPACE pressed
-            pass
         world.camera_pose = Pose(0,0,0.04,0,0,0) @ world.camera_pose
-        # b1.pose = Pose(0,0,1,0,0,0)
-        world.bodies[0].pose = Pose(0,0,0.1,0,0,0.001) @ world.bodies[0].pose
-        cv2.imshow(world.name, world.draw())
-
-    for a in range(5):
-        cv2.destroyWindow(world.name)
+        world.bodies[0].pose = Pose(0,0,0.04,0,0,-0.001) @ world.bodies[0].pose
+        world.display()
