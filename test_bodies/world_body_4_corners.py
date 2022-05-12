@@ -6,12 +6,14 @@ from objects import RetinaBody
 
 Pose = pose.Pose
 
-CORNER_TAG_LENGTH   = 0.058    # meters
-CORNER_FULL_LENGTH  = 0.068    # meters
-WORLD_X_LENGTH      = 0.500    # meters
-WORLD_Y_LENGTH      = 0.500    # meters
-Z_HEIGHT            = 0.007    # meters
+CORNER_TAG_LENGTH   = 0.055    # meters
+CORNER_FULL_LENGTH  = 0.069    # meters
+WORLD_X_LENGTH      = 0.540    # meters
+WORLD_Y_LENGTH      = 0.844    # meters
+TAG_Z_HEIGHT        = 0.007    # meters
 
+
+Z_HEIGHT = TAG_Z_HEIGHT
 angle45 = 3.1415926536/4
 
 WX = WORLD_X_LENGTH
@@ -22,10 +24,10 @@ XY_OFFSET = (CORNER_FULL_LENGTH/math.sqrt(2)) / 2
 XY_HEIGHT = Z_HEIGHT + XY_OFFSET
 
 TAG_POINTS = np.array([
-    [-TAG_HALF_LENGTH, -TAG_HALF_LENGTH, 0, 1],
     [-TAG_HALF_LENGTH,  TAG_HALF_LENGTH, 0, 1],
     [ TAG_HALF_LENGTH,  TAG_HALF_LENGTH, 0, 1],
-    [ TAG_HALF_LENGTH, -TAG_HALF_LENGTH, 0 ,1],
+    [ TAG_HALF_LENGTH, -TAG_HALF_LENGTH, 0, 1],
+    [-TAG_HALF_LENGTH, -TAG_HALF_LENGTH, 0 ,1],
 ])
 
 C1_Z = Pose((0,0,0), np.array([[0], [0], [Z_HEIGHT]]))
