@@ -114,10 +114,12 @@ class Retinas(Thread):
 
                 A[j,i] = get_convex_hull_area(points)
                 T[j,i] = self.do_pnp(labels, points, observer, body)
-                E[j,i] = self.get_total_reprojection_error(labels, points, observer, body, T[j,i])
-                temp = (len(N[j, i])**0.5) * A[j,i] * E[j,i]
+                E[j,i] = self.get_total_reprojection_error(labels, points, observer, body, T[j,i])[0]
+                # print(E[j,i])
+                temp = (len(N[j, i][0])**0.5) * A[j,i] * E[j,i]
                 G[j,i] = - np.log(1 + np.exp(-STRENGTH_CONSTANT) * temp)
 
+            ####################
             nodes = ['b'+str(i) for i in range(I)] + ['c'+str(j) for j in range(J)]
             graph = nx.Graph()
             graph.add_nodes_from(nodes)
@@ -126,12 +128,8 @@ class Retinas(Thread):
                 graph.add_edge('b'+str(i), 'c'+str(j))
                 graph.add_edge('c'+str(j), 'b'+str(i))
 
-            # nx.draw_circular(graph, with_labels=True)
-            # plt.savefig('plotgraph.png', dpi=300, bbox_inches='tight')
-            # print(len(graph.edges))
             paths = nx.shortest_path(graph.to_undirected(), source='b0')
-            # print((0,0) in T)
-
+            
             for node in paths:
                 path = paths[node]
                 pose = Pose(0,0,0,0,0,0)
@@ -153,6 +151,22 @@ class Retinas(Thread):
                 if node[0] == 'c':
                     world_camera_poses[int(node[1])] = pose
                     self.cameras[int(node[1])].pose = pose
+            ####################
+
+            # for iteration in range(100):
+            #     delta_world_body_poses = np.array((I, 6))
+            #     for j in world_camera_poses:
+
+            #         for i in world_body_poses:
+            #             if (j, i) in T:
+            #                 labels, points = N[j, i]
+            #                 observer = self.observers[j]
+            #                 body = self.bodies[i]
+            #                 pose = world_body_poses[i].invert() @ world_camera_poses[j]
+            #                 error, jacobian = cv2.projectPoints(np.array(visible_body[1]), np.array(points), K, D)
+            #                 delta_T
+
+            ####################
 
             for i, body in enumerate(self.bodies):
                 if i not in world_body_poses:
@@ -171,8 +185,10 @@ class Retinas(Thread):
         for label in labels:
             visible_body[1].append(body.point_dict[label])
 
-        projected, _ = cv2.projectPoints(np.array(visible_body[1]), pose.rvec, pose.tvec, observer.camera_streamer.K, observer.camera_streamer.D)
-        return np.power(np.sum(np.power(projected-points, 2)), 0.5)
+        projected, jacobian = cv2.projectPoints(np.array(visible_body[1]), pose.rvec, pose.tvec, observer.camera_streamer.K, observer.camera_streamer.D)
+        error = np.sum(np.power(projected-points, 2))
+        jacobian_final = None
+        return error, jacobian_final
 
     def do_pnp(self, labels, points, observer, body):
         visible_body = labels, []
@@ -194,10 +210,12 @@ if __name__ == '__main__':
 
     camera_streamers.append(cs.WebcamStreamer('rtsp://192.168.0.77:554', cs.iphone13_K))
 
-    camera_streamers.append(cs.WebcamStreamer('rtsp://192.168.0.120:554', cs.iphone13_pro_K))
+    # camera_streamers.append(cs.WebcamStreamer('rtsp://192.168.0.120:554', cs.iphone13_pro_K))
 
-    camera_streamers.append(cs.WebcamStreamer('rtsp://192.168.0.226:554', cs.ipadpro4th_K))
+    # camera_streamers.append(cs.WebcamStreamer('rtsp://192.168.0.226:554', cs.ipadpro4th_K))
 
+
+    camera_streamers.append(cs.RemoteStreamer(cs.URL, cs.oneplus_8t_K))
 
     bodies = [world_body, cube0_body, cube1_body]
 
