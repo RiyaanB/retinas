@@ -22,7 +22,7 @@ class Pose:
         tvec = matrix[0][3], matrix[1][3], matrix[2][3]
         return rvec, tvec
 
-    def __init__(self, rvec, tvec=None, r2=None, t1=None, t2=None, t3=None):
+    def __init__(self, rvec, tvec=None, r2=None, t1=None, t2=None, t3=None, strength=float('inf')):
 
         if isinstance(rvec, Pose):
             self.__init__(rvec.rvec, rvec.tvec)
@@ -43,6 +43,8 @@ class Pose:
             self.rvec = rvec[0], rvec[1], rvec[2]
             self.tvec = tvec[0], tvec[1], tvec[2]
             self.matrix = Pose.get_4x4_from_vectors(self.rvec, self.tvec)
+
+        self.strength = strength
 
     def __matmul__(self, other):
         return Pose(self.matrix @ other.matrix)

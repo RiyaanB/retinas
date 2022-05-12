@@ -5,8 +5,8 @@ import os
 import glob
 from utils import camera_streamer as cs
 
-NUM_IMAGES = 20
-streamer = cs.WebcamStreamer('rtsp://192.168.0.120:554', cs.oneplus_8t_K)
+NUM_IMAGES = 10
+streamer = cs.WebcamStreamer('rtsp://192.168.0.226:554', cs.oneplus_8t_K)
 
 # Define the dimensions of checkerboard
 CHECKERBOARD = (5, 7)
