@@ -18,7 +18,7 @@ DEBUG = False
 
 class World(threading.Thread):
 
-    def __init__(self, name, bodies, cameras, camera_pose=DEFAULT_WORLD_CAM_POSE, camera_dims=DEFAULT_CAMERA_DIMS, K=DEFAULT_K, D=DEFAULT_D):
+    def __init__(self, name, bodies, cameras, camera_pose=DEFAULT_WORLD_CAM_POSE, camera_dims=DEFAULT_CAMERA_DIMS, K=DEFAULT_K, D=DEFAULT_D, runthread=True):
         super().__init__()
         self.bodies = bodies
         self.cameras = cameras
@@ -27,9 +27,13 @@ class World(threading.Thread):
         self.K = K
         self.D = D
         self.camera_pose = camera_pose
-        self.__is__running__ = True
-        cv2.namedWindow(name)
-        self.start()
+        
+        if runthread:
+            cv2.namedWindow(name)
+            self.__is__running__ = True
+            self.start()
+        else:
+            self.__is__running__ = False
 
     def draw(self):
         frame = np.zeros(self.camera_dims)
@@ -52,15 +56,16 @@ class World(threading.Thread):
 
     def display(self):
         disp_img = self.draw()
-        cv2.imshow(self.name, disp_img)
-        cv2.imwrite(self.name + ".png", disp_img)
-        k = cv2.waitKey(1000)
-        cv2.destroyWindow(self.name)
+        # cv2.imshow(self.name, disp_img)
+        # cv2.imwrite(self.name + ".png", disp_img)
+        # k = cv2.waitKey(1000)
+        # cv2.destroyWindow(self.name)
         # if k % 256 == 27:
         #     # ESC pressed
         #     print("Escape hit, closing...")
         #     for a in range(5):
         #         cv2.destroyWindow(self.name)
+        pass
 
     def run(self):
         print("RUNNNING")
