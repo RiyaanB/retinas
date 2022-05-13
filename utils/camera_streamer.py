@@ -41,6 +41,10 @@ ipadpro4th_K = np.array([[1.525e+03, 0, 960],
                          [0, 1.525e+03, 540],
                          [0, 0, 1]])
 
+logitech_c922x_K = np.array([[1.43e+03, 0, 960],
+                         [0, 1.43e+03, 540],
+                         [0, 0, 1]])
+
 
 class RemoteStreamer(Thread):
 
@@ -86,6 +90,10 @@ class WebcamStreamer(Thread):
         self.ret = False
         self.is_running = True
         self.cam = cv2.VideoCapture(camera_number)
+        width = 1920
+        height = 1080
+        self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
         self.K = K
         self.D = D
         time.sleep(0)
