@@ -199,6 +199,7 @@ class Retinas(Thread):
                     world_camera_poses[j] = None
                     self.cameras[j].pose = None
 
+            # print(world_body_poses)
             self.world_camera_poses = world_camera_poses
             self.world_body_poses = world_body_poses
 
@@ -237,7 +238,7 @@ if __name__ == '__main__':
     # camera_streamers.append(cs.WebcamStreamer('rtsp://192.168.0.226:554', cs.ipadpro4th_K))
 
 
-    camera_streamers.append(cs.RemoteStreamer(cs.URL, cs.oneplus_8t_K))
+    camera_streamers.append(cs.RemoteStreamer("http://192.168.0.222:8080/shot.jpg", cs.oneplus_8t_K))
 
     bodies = [world_body, cube0_body, cube1_body]
 
