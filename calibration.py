@@ -6,8 +6,12 @@ import glob
 from utils import camera_streamer as cs
 
 NUM_IMAGES = 10
-streamer = cs.WebcamStreamer('rtsp://192.168.0.226:554', cs.oneplus_8t_K)
-
+streamer = cs.WebcamStreamer(2, cs.mac_K)
+# width = 1920
+# height = 1080
+# streamer.cam.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
+# streamer.cam.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+# streamer.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 # Define the dimensions of checkerboard
 CHECKERBOARD = (5, 7)
 
