@@ -1,7 +1,7 @@
 import numpy as np
 
-from objects import RetinaBody
-from pose import Pose
+from Retinas.objects import RetinaBody
+from Retinas.pose import Pose
 
 TAG_SIDE_LENGTH = 0.057
 CUBE_SIDE_LENGTH = 0.075

@@ -1,8 +1,8 @@
-import pose
+import Retinas.pose as pose
 import numpy as np
 import math
 
-from objects import RetinaBody
+from Retinas.objects import RetinaBody
 
 Pose = pose.Pose
 
