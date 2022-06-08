@@ -1,6 +1,6 @@
 import apriltag
 import cv2
-import Retinas.utils.camera_streamer as cs
+import retinas.utils.camera_streamer as cs
 import numpy as np
 from threading import Thread
 import time
@@ -10,12 +10,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-from Retinas.objects import RetinaCamera, RetinaBody
-from Retinas.pose import Pose, get_cam_pose
-from Retinas.test_bodies.cube_body import cube0_body, cube1_body
-from Retinas.test_bodies.world_body_4_corners import world_body
-from Retinas.utils.convex_hull import get_convex_hull_area
-from Retinas.world import World
+from retinas.objects import RetinaCamera, RetinaBody
+from retinas.pose import Pose, get_cam_pose
+from retinas.test_bodies.cube_body import cube0_body, cube1_body
+from retinas.test_bodies.world_body_4_corners import world_body
+from retinas.utils.convex_hull import get_convex_hull_area
+from retinas.world import World
 
 DEFAULT_APRILTAG_DETECTOR = apriltag.Detector()
 STRENGTH_CONSTANT = 1   # k

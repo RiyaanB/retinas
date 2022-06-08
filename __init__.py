@@ -1,5 +1,5 @@
-import Retinas.pose
-import Retinas.objects
-import Retinas.representation
-import Retinas.retinas
-import Retinas.world
+import retinas.pose as pose
+import retinas.objects as objects
+import retinas.representation as representation
+import retinas.retinas as retinas
+import retinas.world as world

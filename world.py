@@ -1,9 +1,9 @@
 import cv2
 import numpy as np
-from Retinas.pose import *
-from Retinas.representation import *
-from Retinas.objects import *
-import Retinas.utils.camera_streamer as cs
+from retinas.pose import *
+from retinas.representation import *
+from retinas.objects import *
+import retinas.utils.camera_streamer as cs
 import threading
 
 DEFAULT_CAMERA_POSITION = (0, -1.8, 1)

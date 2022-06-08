@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from Retinas.pose import *
+from retinas.pose import *
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
