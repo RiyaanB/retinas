@@ -229,15 +229,7 @@ if __name__ == '__main__':
 
     camera_streamers = []
 
-    # camera_streamers.append(cs.WebcamStreamer('rtp://192.168.0.147:554', cs.mac_K))
-
     camera_streamers.append(cs.WebcamStreamer('rtsp://192.168.0.77:554', cs.iphone13_K))
-
-    # camera_streamers.append(cs.WebcamStreamer('rtsp://192.168.0.120:554', cs.iphone13_pro_K))
-
-    # camera_streamers.append(cs.WebcamStreamer('rtsp://192.168.0.226:554', cs.ipadpro4th_K))
-
-
     camera_streamers.append(cs.RemoteStreamer("http://192.168.0.222:8080/shot.jpg", cs.oneplus_8t_K))
 
     bodies = [world_body, cube0_body, cube1_body]
