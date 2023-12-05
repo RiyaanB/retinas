@@ -1,6 +1,6 @@
 import apriltag
 import cv2
-import retinas.utils.camera_streamer as cs
+import utils.camera_streamer as cs
 import numpy as np
 from threading import Thread
 import time
@@ -10,12 +10,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-from retinas.objects import RetinaCamera, RetinaBody
-from retinas.pose import Pose, get_cam_pose
-from retinas.test_bodies.cube_body import cube0_body, cube1_body
-from retinas.test_bodies.world_body_4_corners import world_body
-from retinas.utils.convex_hull import get_convex_hull_area
-from retinas.world import World
+from objects import RetinaCamera, RetinaBody
+from pose import Pose, get_cam_pose
+from test_bodies.cube_body import cube0_body, cube1_body
+from test_bodies.world_body_4_corners import world_body
+from utils.convex_hull import get_convex_hull_area
+from world import World
 
 DEFAULT_APRILTAG_DETECTOR = apriltag.Detector()
 STRENGTH_CONSTANT = 1   # k
@@ -229,8 +229,9 @@ if __name__ == '__main__':
 
     camera_streamers = []
 
-    camera_streamers.append(cs.WebcamStreamer('rtsp://192.168.0.77:554', cs.iphone13_K))
-    camera_streamers.append(cs.RemoteStreamer("http://192.168.0.222:8080/shot.jpg", cs.oneplus_8t_K))
+    # camera_streamers.append(cs.WebcamStreamer('rtsp://192.168.0.77:554', cs.iphone13_K))
+    # camera_streamers.append(cs.RemoteStreamer("http://192.168.0.222:8080/shot.jpg", cs.oneplus_8t_K))
+    camera_streamers.append(cs.WebcamStreamer(0, cs.oneplus_8t_K))
 
     bodies = [world_body, cube0_body, cube1_body]
 

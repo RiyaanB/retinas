@@ -1,6 +1,6 @@
 import numpy as np
-from retinas.representation import *
-from retinas.pose import *
+from representation import *
+from pose import *
 # import apriltag
 
 MIN_POINTS = 4

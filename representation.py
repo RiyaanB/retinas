@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from retinas.pose import *
+from pose import *
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -50,7 +50,7 @@ class Representation:
         for label, point in points.items():
             self.add_dot(point, color, thickness)
 
-    def draw(self, frame, K, D, CAMERA_world_pose, body_world_pose):
+    def draw(self, frame, K, D, CAMERA_world_pose, body_world_pose, file=None):
         object_points_list = list(self.points)
         if len(object_points_list) < 1:
             return
@@ -76,9 +76,11 @@ class Representation:
 
             frame = cv2.line(frame, frame_start, frame_end, color, thickness)
 
-        for dot in self.dots:
+        for i, dot in enumerate(self.dots):
             object_point = dot
             frame_point = frame_points[object_points_map[object_point]].astype(int).ravel()
+            if file is not None:
+                file.append((i, frame_point))
             color, thickness = self.dots[dot]
             frame = cv2.circle(frame, frame_point, radius=0, color=color, thickness=thickness)
 
